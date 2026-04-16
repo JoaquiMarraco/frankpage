@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🎵 Para vos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #fdf6f0;
+  --surface:   #fff;
+  --pink:      #1e181a;
+  --pink-light:#fde8ee;
+  --text:      #4a3f4a;
+  --muted:     #b0a0b4;
+  --radius:    18px;
+  --bubble-r:  16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+body::before, body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  opacity: .15;
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  width: 500px; height: 500px;
+  background: #001F3F;
+  top: -140px; left: -140px;
+}
+body::after {
+  width: 400px; height: 400px;
+  background: #080400;
+  bottom: -100px; right: -100px;
+}
+
+header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  position: relative; z-index: 1;
+}
+header .subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--muted);
+  letter-spacing: .04em;
+  margin-bottom: .5rem;
+}
+header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 7vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1.15;
+}
+header .hearts {
+  font-size: 1.3rem;
+  margin-top: .6rem;
+  letter-spacing: .35rem;
+  color: #080400;
+}
+
+/* ── song buttons ─────────────────────── */
+#song-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .75rem;
+  max-width: 840px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1rem;
+  position: relative; z-index: 1;
+}
+.song-btn {
+  border: none;
+  border-radius: 999px;
+  padding: .65rem 1.4rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: .92rem;
+  font-weight: 600;
+  color: #fff;
+  transition: transform .18s, box-shadow .18s;
+  letter-spacing: .01em;
+}
+.song-btn:hover  { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.13); }
+.song-btn:active { transform: translateY(0); }
+.song-btn.active { outline: 3px solid rgba(255,255,255,.85); outline-offset: 3px; }
+
+/* ── main layout ──────────────────────── */
+#main {
+  display: none;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  gap: 1.4rem;
+  position: relative; z-index: 1;
+}
+#main.visible {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  animation: fadeUp .4s ease;
+}
+@media (max-width: 600px) {
+  #main.visible { grid-template-columns: 1fr; }
+}
+
+/* ── photo panel ──────────────────────── */
+#photo-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+#gallery {
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 3/4;
+  position: relative;
+  background: #ecdde8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-slot {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity .7s ease;
+}
+.photo-slot.active { opacity: 1; }
+
+#photo-placeholder {
+  text-align: center;
+  color: #c0aac0;
+  font-size: .82rem;
+  padding: 1.5rem;
+  pointer-events: none;
+  line-height: 1.6;
+}
+#photo-placeholder .emoji { font-size: 2.2rem; display: block; margin-bottom: .5rem; }
+
+#gallery-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.4);
+  cursor: pointer;
+  transition: background .2s;
+}
+.dot.active { background: #fff; }
+
+#song-info {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+  border: 1px solid #f0e0ea;
+}
+#song-info .s-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+#song-info .s-artist { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+#song-info .s-part {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: .5rem;
+}
+
+/* ── chat panel ───────────────────────── */
+#chat-panel { display: flex; flex-direction: column; gap: .9rem; }
+
+#section-bar { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sec-btn {
+  border-radius: 999px;
+  border: 1.5px solid #d0c0d4;
+  background: transparent;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: .32rem .95rem;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sec-btn:hover  { background: var(--pink-light); border-color: var(--pink); }
+.sec-btn.active { background: var(--pink); border-color: var(--pink); color: #fff; }
+
+#chat-window {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid #f0e0ea;
+  min-height: 300px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+/* bubbles */
+.bubble-row {
+  display: flex;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .4s ease, transform .4s ease;
+}
+.bubble-row.left  { justify-content: flex-start; }
+.bubble-row.right { justify-content: flex-end; }
+.bubble-row.show  { opacity: 1; transform: translateY(0); }
+
+.bubble {
+  max-width: 80%;
+  border-radius: var(--bubble-r);
+  padding: .6rem 1rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+.bubble-row.left  .bubble { border-bottom-left-radius: 4px; }
+.bubble-row.right .bubble { border-bottom-right-radius: 4px; }
+
+/* typing */
+.typing-row {
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeUp .2s ease;
+}
+.typing-bubble {
+  background: #f0eaf4;
+  border-radius: var(--bubble-r);
+  border-bottom-left-radius: 4px;
+  padding: .65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dot-t {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #c0aac0;
+  animation: blink 1.2s infinite;
+}
+.dot-t:nth-child(2) { animation-delay: .2s; }
+.dot-t:nth-child(3) { animation-delay: .4s; }
+@keyframes blink {
+  0%,80%,100% { opacity: .3; }
+  40%         { opacity: 1; }
+}
+
+#chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  text-align: center;
+}
+
+#back-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: .84rem;
+  cursor: pointer;
+  padding: .2rem 0;
+  text-align: left;
+  transition: color .15s;
+}
+#back-btn:hover { color: var(--text); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+<style>
+.especial {
+font-weight: 650;
+font-style: cursive;
+font-size: 1.1rem;
+letter-spacing: 0.03em;
+text-shadow: 0 0 2px currentColor;
+}
+</style>
+<header>
+  <p class="subtitle">para el amor de mi vida...07/01/♾️</p>
+  <h1>Canciones que me hacen<br>pensar en vos</h1>
+  <div class="hearts">💗💗💗</div>
+</header>
+<script>
+const SONGS = [
+  {
+    id: "vivo",
+    title: "Vivo",
+    artist: "Gustavo Cerati",
+    color: "#800020",
+    colorLight: "#ec7855",
+    icon: "❤️‍🔥",
+    photos: ["fotos/vivo.jpeg"],
+    sections: [
+      {
+        name: "Verso",
+        part: "Estrofa",
+        lines: [
+          { side: "left",  text: "<strong><span class='especial'>Por aquello que encontré en tus ojos</span></strong>"},
+          { side: "left",  text: "Por aquello que perdí en la lucha" },
+          { side: "right", text: "Conocer la otra mitad es poco" },
+          { side: "right", text: "Comprender que solo estar es más puro" },
+        ]
+      }
+    ]
+  },
+  {
+    id: "vivo",
+    title: "Vivo",
+    artist: "Gustavo Cerati",
+    color: "#6c260a",
+    colorLight: "#ec7855",
+    icon: "❤️‍🔥",
+    photos: ["fotos/vivo.jpeg"],
+    sections: [
+      {
+        name: "Coro",
+        part: "Estribillo",
+        lines: [
+          { side: "left",  text: "Me pondré el uniforme de piel humana" },
+          { side: "left",  text: "No esperaba tanto resplandor" },
+          { side: "right", text: "<strong><span class='especial'>El fin de amar</span></strong>" },
+          { side: "right", text: "<strong><span class='especial'>Sentirse más</span></strong>" },
+          { side: "right", text: "<strong><span class='especial'>Vivo 💗</span></strong>" },
+        ]
+      }
+    ]
+  },
+  {
+    id: "poesia",
+    title: "Deja vu",
+    artist: "Gustavo Cerati",
+    color: "#537557",
+    colorLight: "#a49151",
+    icon: "🌙",
+    photos: ["fotos/dejavu.jpeg"],
+    sections: [
+      {
+        name: "Estrofa",
+        part: "Estrofa + pre-estribillo",
+        lines: [
+          { side: "left",  text: "Mira el reloj, se derritió" },
+          { side: "left",  text: "Rebobinando hacia adelante te alcanzó" },
+          { side: "left",  text: "Ecos de antes rebotando en la quietud" },
+          { side: "right", text: "Oh no" },
+          { side: "right", text: "Todo es mentira, ya verás" },
+          { side: "right", text: "<strong><span class='especial'>La poesía es la única verdad</span></strong>" },
+        ]
+      }
+    ]
+  },
+  {
+    id: "universo",
+    title: "Puente",
+    artist: "Gustavo Cerati",
+    color: "#033465",
+    colorLight: "#81b3e4",
+    icon: "🎶",
+    photos: ["fotos/bocanada.jpeg"],
+    sections: [
+      {
+        name: "Verso",
+        part: "Estrofa",
+        lines: [
+          { side: "left",  text: "Si algo callé" },
+          { side: "left",  text: "Es porque entendí todo" },
+          { side: "right", text: "Menos la distancia" },
+          { side: "left",  text: "<strong><span class='especial'>Desordené</span></strong>" },
+          { side: "left",  text: "<strong><span class='especial'>Átomos tuyos para hacerte</span></strong>" },
+          { side: "right", text: "<strong><span class='especial'>Aparecer</span></strong>" },
+        ]
+      }
+    ]
+  },
+  {
+    id: "beautiful",
+    title: "Beautiful",
+    artist: "Gustavo Cerati",
+    color: "#2554e2",
+    colorLight: "#fe66a3",
+    icon: "💙",
+    photos: ["fotos/bocanada.jpeg"],
+    sections: [
+      {
+        name: "Coro",
+        part: "Estribillo",
+        lines: [
+          { side: "left",  text: "y es tan beautiful como lo pensé" },
+          { side: "right", text: "im beautiful" },
+          { side: "left",  text: "estrella de miel" },
+          { side: "right", text: "<strong><span class='especial'>estrella de miel</span></strong>" },
+          { side: "left",  text: "tan beautiful…" },
+          { side: "right", text: "<strong><span class='especial'>mereces lo que sueñas</span></strong>" },
+        ]
+      }
+    ]
+  }
+];
+</script>
+
+<div id="song-grid"></div>
+
+<div id="main">
+  <div id="photo-panel">
+    <div id="gallery">
+      <div id="photo-placeholder">
+        <span class="emoji">🖼️</span>
+        Tus fotos van acá —<br>agregá las rutas en el array<br><code>photos</code> de cada canción
+      </div>
+      <div id="gallery-dots"></div>
+    </div>
+    <div id="song-info">
+      <div class="s-name"  id="info-name">—</div>
+      <div class="s-artist" id="info-artist">—</div>
+      <div class="s-part"  id="info-part"></div>
+    </div>
+  </div>
+
+  <div id="chat-panel">
+    <div id="section-bar"></div>
+    <div id="chat-window">
+      <div id="chat-empty">Elegí una sección para ver la letra ✨</div>
+    </div>
+    <button id="back-btn" onclick="goBack()">← Volver a las canciones</button>
+  </div>
+</div>
+
+<script>
+let photoTimer   = null;
+let currentPhoto = 0;
+let bubbleTimers = [];
+
+/* build buttons */
+SONGS.forEach(song => {
+  const btn = document.createElement('button');
+  btn.className = 'song-btn';
+  btn.id = 'sbtn-' + song.id;
+  btn.style.background = song.color;
+  btn.textContent = song.icon + ' ' + song.title + '  —  ' + song.artist;
+  btn.addEventListener('click', () => selectSong(song));
+  document.getElementById('song-grid').appendChild(btn);
+});
+
+function selectSong(song) {
+  document.querySelectorAll('.song-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sbtn-' + song.id).classList.add('active');
+
+  const main = document.getElementById('main');
+  main.classList.add('visible');
+
+  document.getElementById('info-name').textContent   = song.title;
+  document.getElementById('info-artist').textContent = song.artist;
+  document.getElementById('info-part').textContent   = '';
+
+  /* section buttons */
+  const bar = document.getElementById('section-bar');
+  bar.innerHTML = '';
+  song.sections.forEach((sec, i) => {
+    const b = document.createElement('button');
+    b.className   = 'sec-btn';
+    b.textContent = sec.name;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.sec-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      showSection(song, i);
+    });
+    bar.appendChild(b);
+    if (song.sections.length === 1) b.click();
+  });
+
+  if (song.sections.length > 1) resetChat();
+
+  setupGallery(song.photos);
+  main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* animated bubbles */
+function showSection(song, index) {
+  const sec = song.sections[index];
+  const win = document.getElementById('chat-window');
+
+  /* clear pending timers */
+  bubbleTimers.forEach(t => clearTimeout(t));
+  bubbleTimers = [];
+  win.innerHTML = '';
+
+  document.getElementById('info-part').textContent = sec.part;
+
+  sec.lines.forEach((line, i) => {
+    const delay = i * 1300;
+
+    /* typing indicator */
+    const t1 = setTimeout(() => {
+      const tr = document.createElement('div');
+      tr.className = 'typing-row';
+      tr.id = 'typing-' + i;
+      tr.innerHTML = `<div class="typing-bubble"><div class="dot-t"></div><div class="dot-t"></div><div class="dot-t"></div></div>`;
+      win.appendChild(tr);
+      win.scrollTop = win.scrollHeight;
+
+      /* real bubble */
+      const t2 = setTimeout(() => {
+        tr.remove();
+
+        const row    = document.createElement('div');
+        row.className = 'bubble-row ' + (line.side || 'left');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.style.background = line.side === 'right' ? song.color : song.colorLight;
+        bubble.style.color      = line.side === 'right' ? '#fff'     : '#4a3f4a';
+        bubble.innerHTML = line.text;
+
+        row.appendChild(bubble);
+        win.appendChild(row);
+        requestAnimationFrame(() => requestAnimationFrame(() => row.classList.add('show')));
+        win.scrollTop = win.scrollHeight;
+      }, 900);
+      bubbleTimers.push(t2);
+
+    }, delay);
+    bubbleTimers.push(t1);
+  });
+}
+
+function resetChat() {
+  document.getElementById('chat-window').innerHTML =
+    '<div id="chat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-style:italic;font-family:\'Cormorant Garamond\',serif;font-size:1rem;text-align:center;">Elegí una sección para ver la letra ✨</div>';
+}
+
+function goBack() {
+  document.getElementById('main').classList.remove('visible');
+  document.querySelectorAll('.song-btn').forEach(b => b.classList.remove('active'));
+  bubbleTimers.forEach(t => clearTimeout(t));
+  clearInterval(photoTimer);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* gallery */
+function setupGallery(photos) {
+  const gallery = document.getElementById('gallery');
+  const dotsEl  = document.getElementById('gallery-dots');
+  const ph      = document.getElementById('photo-placeholder');
+
+  gallery.querySelectorAll('.photo-slot').forEach(e => e.remove());
+  dotsEl.innerHTML = '';
+  clearInterval(photoTimer);
+  currentPhoto = 0;
+
+  const valid = (photos || []).filter(p => p && p.trim());
+  if (!valid.length) { ph.style.display = 'flex'; return; }
+  ph.style.display = 'none';
+
+  valid.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.className = 'photo-slot' + (i === 0 ? ' active' : '');
+    img.alt = 'foto ' + (i+1);
+    gallery.insertBefore(img, dotsEl);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goToPhoto(i, valid.length));
+    dotsEl.appendChild(dot);
+  });
+
+  if (valid.length > 1)
+    photoTimer = setInterval(() => goToPhoto((currentPhoto+1) % valid.length, valid.length), 4000);
+}
+
+function goToPhoto(i, total) {
+  document.querySelectorAll('.photo-slot').forEach((s,j) => s.classList.toggle('active', j===i));
+  document.querySelectorAll('.dot').forEach((d,j)       => d.classList.toggle('active', j===i));
+  currentPhoto = i;
+}
+</script>
+</body>
+</html>
